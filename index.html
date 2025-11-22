@@ -1,0 +1,646 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Star, Check, ChevronDown, ChevronUp, ShieldCheck, Play, Menu, X, ArrowRight } from 'lucide-react';
+
+// --- CONFIGURATION & ASSETS ---
+
+const CHECKOUT_URL = "https://pay.hotmart.com/W103028095S?checkoutMode=10&bid=1763726439368";
+
+const ASSETS = {
+  logo: "https://raw.githubusercontent.com/marinho-hub/oratoria-magnetica-assets/b630ae542ede95cc2766244be79638504eb31d0d/LOGO_METODO_ORATORIA_MAGNETICA.png",
+  hero: "https://raw.githubusercontent.com/marinho-hub/oratoria-magnetica-assets/main/foto-capa-header.png",
+  titleGraphic: "https://raw.githubusercontent.com/marinho-hub/oratoria-magnetica-assets/main/Libere_o_Poder_da-removebg-preview.png",
+  bonus1: "https://raw.githubusercontent.com/marinho-hub/oratoria-magnetica-assets/main/B%C3%94NUS%20ORATORIA%20MAGNETICA.png",
+  bonus2: "https://raw.githubusercontent.com/marinho-hub/oratoria-magnetica-assets/main/B%C3%94NUS%20ORATORIA%20MAGNETICA%20(2).png",
+  bonus3: "https://raw.githubusercontent.com/marinho-hub/oratoria-magnetica-assets/main/B%C3%94NUS%20ORATORIA%20MAGNETICA%20(3).png",
+  bonus4: "https://raw.githubusercontent.com/marinho-hub/oratoria-magnetica-assets/main/B%C3%94NUS%20ORATORIA%20MAGNETICA%20(5).png",
+  testimonial1: "https://raw.githubusercontent.com/marinho-hub/oratoria-magnetica-assets/main/1.png",
+  testimonial2: "https://raw.githubusercontent.com/marinho-hub/oratoria-magnetica-assets/main/2.png",
+  testimonial3: "https://raw.githubusercontent.com/marinho-hub/oratoria-magnetica-assets/main/3.png",
+  testimonial4: "https://raw.githubusercontent.com/marinho-hub/oratoria-magnetica-assets/main/4.png",
+  testimonial5: "https://raw.githubusercontent.com/marinho-hub/oratoria-magnetica-assets/main/5.png"
+};
+
+const FAQs = [
+  { q: "O curso é para tímidas?", a: "Sim. Exercícios graduais e acolhimento garantem avanço sem exposição forçada." },
+  { q: "Quanto tempo por dia?", a: "Aulas curtas + 20–30 minutos de prática diária." },
+  { q: "Tem garantia?", a: "Sim — 7 dias." },
+  { q: "Como são as aulas ao vivo?", a: "Sessões de correção e acolhimento com análise prática." },
+  { q: "Como funciona o acesso?", a: "Acesso por 1 ano com atualizações e comunidade." }
+];
+
+// --- SHARED STYLES ---
+
+// Gold Gradient for Text/Borders
+const goldTextClass = "bg-clip-text text-transparent bg-gradient-to-r from-[#BF953F] via-[#F5E08E] to-[#AA771C]";
+const goldBgClass = "bg-gradient-to-r from-[#BF953F] via-[#B38728] to-[#AA771C]";
+const goldBorderClass = "border border-[#BF953F]";
+
+// --- COMPONENTS ---
+
+const GoldButton = ({ text, subtext, className = "", fullWidth = false }) => (
+  <a 
+    href={CHECKOUT_URL}
+    target="_blank"
+    rel="noopener noreferrer"
+    className={`
+      group relative overflow-hidden rounded-lg ${goldBgClass} 
+      px-8 py-4 text-center transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(191,149,63,0.4)]
+      ${fullWidth ? 'w-full block' : 'inline-block'}
+      ${className}
+    `}
+  >
+    <div className="relative z-10 flex flex-col items-center justify-center">
+      <span className="text-lg md:text-xl font-bold text-white uppercase tracking-wide drop-shadow-md">
+        {text}
+      </span>
+      {subtext && (
+        <span className="text-xs md:text-sm text-white/90 font-medium mt-1">
+          {subtext}
+        </span>
+      )}
+    </div>
+    {/* Shine effect */}
+    <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+  </a>
+);
+
+const SectionHeading = ({ children, subtitle, align = "center" }) => (
+  <div className={`mb-12 ${align === "center" ? "text-center" : "text-left"} max-w-4xl mx-auto px-4`}>
+    <h2 className={`text-3xl md:text-5xl font-serif font-bold text-white mb-4 leading-tight`}>
+      {children}
+    </h2>
+    {subtitle && <p className="text-stone-300 text-lg md:text-xl max-w-2xl mx-auto">{subtitle}</p>}
+  </div>
+);
+
+const BenefitCard = ({ title, icon, desc }) => (
+  <div className="min-w-[85vw] md:min-w-[350px] snap-center bg-stone-900/50 border border-stone-800 p-8 rounded-xl backdrop-blur-sm hover:border-[#BF953F]/50 transition-colors duration-300 flex flex-col items-start">
+    <div className={`w-12 h-12 rounded-full ${goldBgClass} flex items-center justify-center mb-6 text-white shadow-lg`}>
+      {icon}
+    </div>
+    <h3 className="text-xl font-bold text-white mb-3">{title}</h3>
+    <p className="text-stone-400 leading-relaxed">{desc}</p>
+  </div>
+);
+
+const BonusCard = ({ image, title, value }) => (
+  <div className="min-w-[85vw] md:min-w-[300px] md:flex-1 snap-center group cursor-pointer">
+    <div className="relative rounded-xl overflow-hidden border border-stone-800 group-hover:border-[#BF953F] transition-all duration-300 aspect-[4/5] md:aspect-square">
+      <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col justify-end p-6">
+        <span className="text-[#BF953F] text-xs font-bold tracking-widest uppercase mb-1">Bônus Exclusivo</span>
+        <h4 className="text-white font-bold text-lg leading-tight">{title}</h4>
+      </div>
+    </div>
+  </div>
+);
+
+const AccordionItem = ({ question, answer, isOpen, onClick }) => (
+  <div className="border-b border-stone-800 last:border-0">
+    <button 
+      onClick={onClick}
+      className="w-full py-6 flex items-center justify-between text-left focus:outline-none group"
+    >
+      <span className={`text-lg md:text-xl font-medium transition-colors ${isOpen ? 'text-[#BF953F]' : 'text-stone-300 group-hover:text-white'}`}>
+        {question}
+      </span>
+      {isOpen ? <ChevronUp className="text-[#BF953F]" /> : <ChevronDown className="text-stone-500" />}
+    </button>
+    <div 
+      className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-48 opacity-100 mb-6' : 'max-h-0 opacity-0'}`}
+    >
+      <p className="text-stone-400 leading-relaxed">{answer}</p>
+    </div>
+  </div>
+);
+
+const TestimonialImage = ({ src }) => (
+  <div className="min-w-[80vw] md:min-w-[400px] snap-center rounded-xl overflow-hidden border border-stone-800 shadow-2xl">
+    <img src={src} alt="Depoimento" className="w-full h-auto object-contain" loading="lazy" />
+  </div>
+);
+
+// --- MAIN APP COMPONENT ---
+
+export default function App() {
+  const [openFaq, setOpenFaq] = useState(0);
+  
+  return (
+    <div className="bg-[#050505] text-stone-200 font-sans selection:bg-[#BF953F] selection:text-black overflow-x-hidden">
+      
+      {/* STYLES INJECTION FOR SCROLLBAR & ANIMATION */}
+      <style dangerouslySetInnerHTML={{__html: `
+        html { scroll-behavior: smooth; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #BF953F; }
+        
+        /* Hide scrollbar for swipe containers but keep functionality */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        @keyframes shimmer {
+          100% { transform: translateX(100%); }
+        }
+
+        /* Marquee Animation */
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+          display: flex;
+          width: max-content;
+          animation: marquee 30s linear infinite;
+        }
+      `}} />
+
+      {/* --- 1. HERO (Full Width / Edge-to-Edge) --- */}
+      {/* NOTE: No text overlay on image as requested. */}
+      <section className="w-full relative z-0">
+        <img 
+          src={ASSETS.hero} 
+          alt="Poliana Felix - Oratória Magnética" 
+          className="w-full h-auto object-cover max-h-[90vh] md:max-h-[85vh]" 
+          draggable="false"
+        />
+        {/* Subtle gradient at bottom to blend into next section */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#050505] to-transparent"></div>
+      </section>
+
+      {/* --- 2. HEADLINE / HOOK (Directly below hero) --- */}
+      <section className="relative z-10 -mt-12 md:-mt-20 pb-20 px-4">
+        <div className="container mx-auto max-w-4xl text-center bg-[#050505]/80 backdrop-blur-sm md:bg-transparent p-4 rounded-xl">
+          
+          {/* Badge removido */}
+
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-serif font-bold text-white leading-[1.1] mb-6">
+            Imagine falar com firmeza, presença e naturalidade — <span className="text-stone-400">sem travar</span> e sem sentir que <span className={goldTextClass}>sua voz “não é suficiente”.</span>
+          </h1>
+          
+          <p className="text-lg md:text-2xl text-stone-300 max-w-2xl mx-auto leading-relaxed mb-10">
+            Domine sua comunicação em 21 dias com aulas curtas, ações diárias e exercícios práticos para eliminar vícios de linguagem, ganhar presença e vender mais com sua voz.
+          </p>
+
+          <div className="flex flex-col items-center gap-4">
+             <GoldButton text="EU QUERO SER MAGNÉTICA" subtext="Condição especial de lançamento" className="w-full md:w-auto min-w-[300px] shadow-[0_0_40px_rgba(191,149,63,0.2)]" />
+             <p className="text-stone-500 text-xs flex items-center gap-2 mt-2">
+               <ShieldCheck size={14} /> Garantia de 7 dias inclusa
+             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* --- DIVIDER SEÇÃO: ORATÓRIA MAGNÉTICA (MARQUEE) --- */}
+      <section className="w-full h-[120px] bg-gradient-to-r from-[#4A0E0E] to-[#7A1E1E] flex items-center overflow-hidden relative z-20 shadow-2xl border-y border-[#BF953F]/20">
+        <div className="animate-marquee">
+          {/* Geramos texto suficiente para garantir o loop em telas grandes. 
+              O loop vai até -50%, então precisamos de 2 metades idênticas. */}
+          {[...Array(20)].map((_, i) => (
+            <div key={i} className="flex items-center">
+              <h2 className="text-white text-3xl md:text-[42px] font-serif font-bold tracking-[1px] drop-shadow-md uppercase md:normal-case whitespace-nowrap mx-8 md:mx-12">
+                Oratória Magnética
+              </h2>
+              {/* Pequeno ponto separador decorativo opcional ou apenas espaço */}
+              <div className="w-2 h-2 rounded-full bg-[#BF953F]/50"></div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* --- 3. MICRO-TRANSFORMATION --- */}
+      <section className="py-20 bg-stone-950 border-y border-stone-900">
+        <div className="container mx-auto px-4 max-w-5xl text-center">
+          <h3 className="text-2xl md:text-3xl font-serif text-white mb-4">
+            Do medo à presença magnética
+          </h3>
+          <p className="text-stone-400 text-lg md:text-xl leading-relaxed max-w-3xl mx-auto">
+            Aprenda a usar sua voz, postura e ritmo para criar conexão e autoridade — mesmo que você hoje trave diante da câmera ou do palco.
+          </p>
+        </div>
+      </section>
+
+      {/* --- 4. BENEFITS (PILARES) CAROUSEL --- */}
+      <section className="py-24 bg-[#050505] overflow-hidden">
+        <div className="container mx-auto px-4">
+          <SectionHeading subtitle="Por que escolher o Método Oratória Magnética?">
+            Diferenciais Exclusivos
+          </SectionHeading>
+          
+          {/* Responsive Carousel Wrapper */}
+          <div className="flex md:grid md:grid-cols-3 gap-6 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-8 md:pb-0 px-2">
+            
+            <BenefitCard 
+              icon={<Play size={24} />}
+              title="21 Dias de Prática"
+              desc="Nenhum conteúdo vazio; só ações diárias que você executa e vê resultado imediato na sua comunicação."
+            />
+            
+            <BenefitCard 
+              icon={<Star size={24} />}
+              title="Aulas + Encontros Ao Vivo"
+              desc="Aulas gravadas para ver quando quiser + 2 encontros ao vivo de correção e acolhimento personalizado."
+            />
+            
+            <BenefitCard 
+              icon={<ShieldCheck size={24} />}
+              title="Comunidade & IA"
+              desc="Networking na comunidade exclusiva das Boladonas e IA própria para acelerar seus roteiros."
+            />
+
+          </div>
+          {/* Swipe Hint for Mobile */}
+          <div className="md:hidden flex justify-center mt-4 gap-1">
+             <div className="w-2 h-2 rounded-full bg-[#BF953F]"></div>
+             <div className="w-2 h-2 rounded-full bg-stone-800"></div>
+             <div className="w-2 h-2 rounded-full bg-stone-800"></div>
+          </div>
+        </div>
+      </section>
+
+      {/* --- 5. MODULES (What You Get) --- */}
+      <section className="py-24 bg-[#0F0202] relative">
+        
+        {/* --- NOVO FUNDO EM V DECORATIVO --- */}
+        <div 
+          className="absolute inset-0 z-0 pointer-events-none opacity-20"
+          style={{
+            background: 'linear-gradient(180deg, #8B0000 0%, #A30000 50%, #CF0000 100%)',
+            clipPath: 'polygon(0 0, 100% 0, 50% 100%)'
+          }}
+        />
+        {/* ---------------------------------- */}
+
+        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#8B0000]/30 to-transparent z-10"></div>
+        
+        <div className="container mx-auto px-4 max-w-5xl relative z-10">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-serif text-white mb-8">
+                O que você vai <span className={goldTextClass}>aprender</span>
+              </h2>
+              <ul className="space-y-6">
+                {[
+                  "Técnicas práticas para gravar vídeos que convertem.",
+                  "Estrutura de palestras e lives que vendem.",
+                  "Como eliminar vícios de linguagem e modular a voz.",
+                  "Scripts magnéticos para reels, lives e vendas.",
+                  "Networking e posicionamento para atrair clientes.",
+                  "Plano de 30 dias para sustentar o crescimento."
+                ].map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-4">
+                    <div className="mt-1 min-w-[20px]">
+                       {/* Checkmark updated to Red for contrast */}
+                       <Check size={20} className="text-[#CF0000]" />
+                    </div>
+                    <span className="text-stone-300 text-lg">{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-10">
+                 <GoldButton text="EU QUERO SER MAGNÉTICA" className="w-full md:w-auto" />
+              </div>
+            </div>
+            <div className="relative">
+              {/* Decorative Element - Red Glow */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-[#8B0000]/20 to-transparent blur-[60px] rounded-full"></div>
+              <div className="relative bg-stone-900/80 border border-stone-800 p-8 rounded-2xl hover:border-[#8B0000]/50 transition-colors duration-300">
+                <div className="flex items-center gap-4 mb-6 pb-6 border-b border-stone-800">
+                   <div className="w-12 h-12 rounded-full bg-[#1a0505] flex items-center justify-center text-[#CF0000]">
+                     <Star fill="currentColor" />
+                   </div>
+                   <div>
+                     <h4 className="text-white font-bold">Formato Híbrido</h4>
+                     <p className="text-sm text-stone-400">Gravado + Ao Vivo</p>
+                   </div>
+                </div>
+                <p className="text-stone-400 italic">
+                  "Você não é mais um número; somos uma comunidade que te chama pelo nome. O acolhimento é personalizado para destravar sua voz."
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* --- 6. SOCIAL PROOF (Testimonials Slider) --- */}
+      <section className="py-24 bg-[#050505]">
+        <div className="container mx-auto px-4">
+          <SectionHeading subtitle="Quem aplicou, teve resultado">
+            Elas destravaram a voz
+          </SectionHeading>
+
+          <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory no-scrollbar py-8">
+            {[ASSETS.testimonial1, ASSETS.testimonial2, ASSETS.testimonial3, ASSETS.testimonial4, ASSETS.testimonial5].map((src, i) => (
+              <TestimonialImage key={i} src={src} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* --- 7. BONUS SECTION --- */}
+      <section className="py-24 bg-stone-950">
+        <div className="container mx-auto px-4">
+          <SectionHeading subtitle="Presentes exclusivos para esta turma">
+            Bônus inclusos na inscrição
+          </SectionHeading>
+
+          <div className="flex md:grid md:grid-cols-4 gap-4 overflow-x-auto snap-x snap-mandatory no-scrollbar px-2">
+            <BonusCard image={ASSETS.bonus1} title="Aulas Secretas" />
+            <BonusCard image={ASSETS.bonus2} title="Networking Mensal" />
+            <BonusCard image={ASSETS.bonus3} title="Checklist 30 Dias" />
+            <BonusCard image={ASSETS.bonus4} title="IA para Boladonas" />
+          </div>
+        </div>
+      </section>
+
+      {/* --- 8. OFFER / PRICE CARD (NEW LAYOUT) --- */}
+      <section className="py-24 bg-[#050505] relative overflow-hidden">
+        {/* Background Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-[radial-gradient(circle_at_center,_rgba(191,149,63,0.08)_0%,_transparent_70%)] pointer-events-none"></div>
+
+        <div className="container mx-auto px-4 relative z-10 max-w-6xl">
+          
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-20">
+            
+            {/* ESQUERDA: RECAPITULANDO (Lista) */}
+            <div className="w-full lg:w-1/2 flex flex-col gap-6 text-left">
+              <div className="mb-4">
+                <h2 className="text-4xl md:text-5xl font-serif italic text-white mb-2">
+                  <span className={goldTextClass}>Recapitulando...</span>
+                </h2>
+                <p className="text-xl text-stone-300 font-medium">
+                  Ao entrar para o Método, você terá acesso a tudo isso:
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+                  <span className="text-stone-200 text-lg">• Método Oratória Magnética (Curso Completo)</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+                   <span className="text-stone-200 text-lg">• Mentoria + Acolhimento ao Vivo</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+                   <span className="text-stone-200 text-lg">• Comunidade Exclusiva das Boladonas</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+                   <span className="text-stone-200 text-lg">• Bônus: Aulas Secretas + Networking</span>
+                </div>
+                 <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+                   <span className="text-stone-200 text-lg">• Bônus: Checklist 30 Dias + IA</span>
+                </div>
+              </div>
+            </div>
+
+            {/* DIREITA: CARD DE PREÇO (Layout Box) */}
+            <div className="w-full lg:w-[460px] relative">
+              {/* Card Container */}
+              <div className="bg-gradient-to-b from-stone-900 to-black border border-[#BF953F] rounded-[20px] p-8 md:p-10 flex flex-col items-center text-center shadow-[0_0_50px_rgba(191,149,63,0.15)] relative">
+                
+                {/* Logo / Title inside card */}
+                <div className="mb-6 w-40">
+                   <img 
+                    src={ASSETS.logo} 
+                    alt="Logo" 
+                    className="w-full h-auto opacity-90 grayscale hover:grayscale-0 transition-all"
+                   />
+                </div>
+
+                {/* Preço Riscado */}
+                <div className="flex flex-col gap-2 mb-6">
+                  <span className="text-stone-500 text-xl font-medium line-through decoration-stone-500">
+                    De R$ 1.000,00
+                  </span>
+                  <span className="text-stone-300 text-lg">Por apenas:</span>
+                </div>
+
+                {/* Preço Grande */}
+                <div className="flex flex-col items-center justify-center gap-1 mb-2">
+                   <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-medium text-white">12x de</span>
+                   </div>
+                   <span className={`text-7xl font-bold ${goldTextClass} leading-none`}>
+                      R$49,70
+                   </span>
+                </div>
+                
+                <span className="text-stone-400 text-lg font-medium mb-8">
+                  ou R$ 497 à vista
+                </span>
+
+                {/* Botão CTA */}
+                <div className="w-full relative z-20">
+                   <GoldButton 
+                      text="EU QUERO SER MAGNÉTICA" 
+                      fullWidth 
+                      className="rounded-full !py-4 text-lg shadow-xl hover:shadow-[#BF953F]/40"
+                   />
+                </div>
+
+                {/* Garantia */}
+                <div className="mt-6 flex items-center gap-2 text-stone-500 text-xs md:text-sm">
+                   <ShieldCheck size={16} className="text-[#BF953F]" />
+                   <span>Garantia incondicional de 7 dias</span>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* --- 9. FAQ ACCORDION --- */}
+      <section className="py-24 bg-stone-950">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <SectionHeading>Perguntas Frequentes</SectionHeading>
+          
+          <div className="space-y-2">
+            {FAQs.map((faq, index) => (
+              <AccordionItem 
+                key={index} 
+                question={faq.q} 
+                answer={faq.a} 
+                isOpen={openFaq === index}
+                onClick={() => setOpenFaq(index === openFaq ? -1 : index)}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* --- 10. FINAL CTA --- */}
+      <section className="py-20 bg-[#050505] border-t border-stone-900 text-center">
+        <div className="container mx-auto px-4 max-w-4xl">
+           <h2 className="text-3xl md:text-5xl font-serif text-white mb-8">
+             Não deixe sua voz ser um obstáculo. <br />
+             <span className={goldTextClass}>Torne-a seu maior ativo.</span>
+           </h2>
+           <GoldButton text="Quero ser uma Boladona" subtext="Acesso imediato à plataforma" />
+        </div>
+      </section>
+
+      {/* --- 11. NOVA SEÇÃO — QUEM É THAY MARINHO --- */}
+      <section className="py-24 bg-stone-950 border-t border-stone-900">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            
+            {/* Imagem da Thay Marinho */}
+            <div className="order-1 w-full">
+               <div className="relative rounded-2xl overflow-hidden border border-[#BF953F]/30 shadow-[0_0_40px_rgba(191,149,63,0.15)] group">
+                  <img 
+                    src="https://raw.githubusercontent.com/marinho-hub/oratoria-magnetica-assets/b630ae542ede95cc2766244be79638504eb31d0d/thay-marinho.jpg" 
+                    alt="Thay Marinho" 
+                    className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105" 
+                    loading="lazy"
+                  />
+                  {/* Overlay suave para manter o tom premium */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none"></div>
+               </div>
+            </div>
+            
+            {/* Texto Sobre */}
+            <div className="order-2">
+              <h2 className="text-3xl md:text-5xl font-serif font-bold text-white mb-8">
+                SOBRE <span className={goldTextClass}>THAY MARINHO</span>
+              </h2>
+              
+              <div className="space-y-6 text-lg text-stone-300 leading-relaxed text-justify md:text-left">
+                <p>
+                  <strong className="text-white">Thay Marinho é a Boladona do Marketing</strong> há 7 anos transformando mulheres reais em referências de presença, comunicação e vendas.
+                </p>
+                <p>
+                  Especialista em posicionamento, oratória e comunicação magnética, criadora da Mesa das Boladonas e nome forte da presença digital feminina no Brasil.
+                </p>
+                <p>
+                  Com formação em Jornalismo, Marketing Estratégico e anos de prática intensa no digital, Thay guia mulheres a saírem da invisibilidade e assumirem o trono da autoridade que já é delas.
+                </p>
+                <p>
+                  Seu método exclusivo une técnica, intenção e magnetismo para que você comunique com poder, autenticidade e resultado — não só falando melhor, mas comandando atenção, influenciando decisões e vendendo com presença.
+                </p>
+                <p>
+                  Hoje, sua missão é ajudar mulheres a destravarem a voz, refinarem a presença, ativarem o magnetismo e se posicionarem como líderes que inspiram e vendem.
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* --- 12. SECOND OFFER / PRICE CARD (DUPLICATED) --- */}
+      <section className="py-24 bg-[#050505] relative overflow-hidden border-t border-stone-900">
+        {/* Background Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-[radial-gradient(circle_at_center,_rgba(191,149,63,0.08)_0%,_transparent_70%)] pointer-events-none"></div>
+
+        <div className="container mx-auto px-4 relative z-10 max-w-6xl">
+          
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-20">
+            
+            {/* ESQUERDA: RECAPITULANDO (Lista) */}
+            <div className="w-full lg:w-1/2 flex flex-col gap-6 text-left">
+              <div className="mb-4">
+                <h2 className="text-4xl md:text-5xl font-serif italic text-white mb-2">
+                  <span className={goldTextClass}>Recapitulando...</span>
+                </h2>
+                <p className="text-xl text-stone-300 font-medium">
+                  Ao entrar para o Método, você terá acesso a tudo isso:
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+                  <span className="text-stone-200 text-lg">• Método Oratória Magnética (Curso Completo)</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+                   <span className="text-stone-200 text-lg">• Mentoria + Acolhimento ao Vivo</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+                   <span className="text-stone-200 text-lg">• Comunidade Exclusiva das Boladonas</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+                   <span className="text-stone-200 text-lg">• Bônus: Aulas Secretas + Networking</span>
+                </div>
+                 <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+                   <span className="text-stone-200 text-lg">• Bônus: Checklist 30 Dias + IA</span>
+                </div>
+              </div>
+            </div>
+
+            {/* DIREITA: CARD DE PREÇO (Layout Box) */}
+            <div className="w-full lg:w-[460px] relative">
+              {/* Card Container */}
+              <div className="bg-gradient-to-b from-stone-900 to-black border border-[#BF953F] rounded-[20px] p-8 md:p-10 flex flex-col items-center text-center shadow-[0_0_50px_rgba(191,149,63,0.15)] relative">
+                
+                {/* Logo / Title inside card */}
+                <div className="mb-6 w-40">
+                   <img 
+                    src={ASSETS.logo} 
+                    alt="Logo" 
+                    className="w-full h-auto opacity-90 grayscale hover:grayscale-0 transition-all"
+                   />
+                </div>
+
+                {/* Preço Riscado */}
+                <div className="flex flex-col gap-2 mb-6">
+                  <span className="text-stone-500 text-xl font-medium line-through decoration-stone-500">
+                    De R$ 1.000,00
+                  </span>
+                  <span className="text-stone-300 text-lg">Por apenas:</span>
+                </div>
+
+                {/* Preço Grande */}
+                <div className="flex flex-col items-center justify-center gap-1 mb-2">
+                   <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-medium text-white">12x de</span>
+                   </div>
+                   <span className={`text-7xl font-bold ${goldTextClass} leading-none`}>
+                      R$49,70
+                   </span>
+                </div>
+                
+                <span className="text-stone-400 text-lg font-medium mb-8">
+                  ou R$ 497 à vista
+                </span>
+
+                {/* Botão CTA */}
+                <div className="w-full relative z-20">
+                   <GoldButton 
+                      text="EU QUERO SER MAGNÉTICA" 
+                      fullWidth 
+                      className="rounded-full !py-4 text-lg shadow-xl hover:shadow-[#BF953F]/40"
+                   />
+                </div>
+
+                {/* Garantia */}
+                <div className="mt-6 flex items-center gap-2 text-stone-500 text-xs md:text-sm">
+                   <ShieldCheck size={16} className="text-[#BF953F]" />
+                   <span>Garantia incondicional de 7 dias</span>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* --- FOOTER --- */}
+      <footer className="py-10 bg-black text-stone-600 text-center text-sm border-t border-stone-900">
+        <div className="container mx-auto px-4">
+          <p>&copy; {new Date().getFullYear()} Método Oratória Magnética. Todos os direitos reservados.</p>
+          <div className="mt-4 flex justify-center gap-4">
+             <a href="#" className="hover:text-[#BF953F]">Termos de Uso</a>
+             <a href="#" className="hover:text-[#BF953F]">Política de Privacidade</a>
+          </div>
+        </div>
+      </footer>
+
+    </div>
+  );
+}
